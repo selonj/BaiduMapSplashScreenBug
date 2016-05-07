@@ -7,3 +7,4 @@ build
 /gradle.properties
 *.iml
 *.swp
+Thumbs.db

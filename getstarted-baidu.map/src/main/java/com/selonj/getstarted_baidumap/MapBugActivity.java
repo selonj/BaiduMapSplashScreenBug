@@ -6,19 +6,30 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.util.DisplayMetrics;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import com.astuetz.PagerSlidingTabStrip;
 import com.baidu.mapapi.SDKInitializer;
+import com.baidu.mapapi.map.BaiduMap;
+import com.baidu.mapapi.map.BitmapDescriptor;
+import com.baidu.mapapi.map.BitmapDescriptorFactory;
+import com.baidu.mapapi.map.MapStatusUpdate;
 import com.baidu.mapapi.map.MapView;
+import com.baidu.mapapi.map.MarkerOptions;
+import com.baidu.mapapi.map.OverlayOptions;
+import com.baidu.mapapi.model.LatLng;
 import java.util.List;
 
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
+import static com.baidu.mapapi.map.MapStatusUpdateFactory.newLatLngZoom;
 import static java.util.Arrays.asList;
 
 public class MapBugActivity extends FragmentActivity {
@@ -147,7 +158,65 @@ public class MapBugActivity extends FragmentActivity {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-      return mMapView = new MapView(getActivity());
+      mMapView = aMapView(markAt(guangzhou()), centerAt(guangzhou()));
+      return enableScrolling(displaysBeyondTheScreen(mMapView));
+    }
+
+    private MapView aMapView(OverlayOptions options, MapStatusUpdate status) {
+      MapView mapView = new MapView(getActivity());
+      BaiduMap map = mapView.getMap();
+      map.addOverlay(options);
+      map.setMapStatus(status);
+      return mapView;
+    }
+
+    private MarkerOptions markAt(LatLng location) {
+      BitmapDescriptor icon = BitmapDescriptorFactory.fromResource(R.drawable.mark_icon);
+      return new MarkerOptions().position(location).icon(icon);
+    }
+
+    private MapStatusUpdate centerAt(LatLng location) {
+      return newLatLngZoom(location,11);
+    }
+
+    private LatLng guangzhou() {
+      return at(113.277117, 23.116696);
+    }
+
+    private LatLng at(double lng, double lat) {
+      return new LatLng(lat, lng);
+    }
+
+    private View displaysBeyondTheScreen(View view) {
+      LinearLayout container = new LinearLayout(getActivity());
+      container.setOrientation(LinearLayout.VERTICAL);
+      container.addView(fullScreenView());
+      container.addView(view);
+      view.setLayoutParams(layoutWithFixHeight(500));
+      return container;
+    }
+
+    private View fullScreenView() {
+      return new View(getActivity()) {{
+        setLayoutParams(layoutWithFixHeight(windowHeight() + 500));
+      }};
+    }
+
+    private LinearLayout.LayoutParams layoutWithFixHeight(int height) {
+      return new LinearLayout.LayoutParams(MATCH_PARENT, height);
+    }
+
+    private int windowHeight() {
+      DisplayMetrics displaymetrics = new DisplayMetrics();
+      getActivity().getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
+      return displaymetrics.heightPixels;
+    }
+
+    private View enableScrolling(View view) {
+      ScrollView viewport = new ScrollView(getActivity());
+      viewport.setFillViewport(true);
+      viewport.addView(view);
+      return viewport;
     }
 
     @Override
